@@ -22,6 +22,9 @@ spring:
     hibernate:
       ddl-auto: update
 
+server:
+  port: 33400
+
 kafka:
   topic:
     transactions: transactions

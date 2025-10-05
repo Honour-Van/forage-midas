@@ -51,25 +51,7 @@ public class GenericKafkaListener {
     }
 
     private void handleTransaction(Transaction transaction) {
-        long senderId = transaction.getSenderId(), recipientId = transaction.getRecipientId();
-
-        logger.debug("sender[{}]: {}, {}; recipient[{}], {}, {}", senderId,
-                userService.getUserName(senderId), userService.getBalance(senderId),
-                recipientId, userService.getUserName(recipientId), userService.getBalance(recipientId));
-
-        float senderAmount = userService.getBalance(senderId);
-        if (senderAmount < transaction.getAmount()) {
-            logger.error("sender has no enough money");
-        }
-        else {
-            transactionService.insertOneRecord(transaction);
-            userService.updateBalance(senderId, senderAmount - transaction.getAmount());
-            userService.updateBalance(recipientId, userService.getBalance(recipientId) + transaction.getAmount());
-            logger.debug("sender[{}]: {}, {}; recipient[{}], {}, {}", senderId,
-                    userService.getUserName(senderId), userService.getBalance(senderId),
-                    recipientId, userService.getUserName(recipientId), userService.getBalance(recipientId));
-        }
-
+        transactionService.transfer(transaction);
     }
 
 }

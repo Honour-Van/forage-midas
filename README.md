@@ -29,3 +29,24 @@ Embedded Kafka broker running at: localhost:50231
 
 所以需要使用Value注入
 
+## Task 3
+
+通过完善jpa的封装，增加updateBalance的功能，在消费时编写简单的金额转移逻辑即可。
+
+可以使用debug日志，打印完整的交易过程。也可以最终输出，从而找到目标用户的余额。
+
+## Task 4
+
+为了通过Task 4，方法和task3一样，只需要最后输出时查询另一个人的结果就可以了。
+
+在IDEA直接运行transaction-incentive-api.jar，会启动一个服务，虽然有很多condition条件不满足，但不影响serving，通过post请求测试可以返回结果的。
+```shell
+curl -X POST http://127.0.0.1:8080/incentive \
+  -H 'Content-Type: application/json' \
+  -d '{"senderId":3,"recipientId":2,"amount":164.17}'
+```
+
+经过几个尝试，都会返回`{"amount":0.0}`。所以其实调用与否都无所谓。
+
+## Task 5
+
