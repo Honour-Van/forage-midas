@@ -2,6 +2,8 @@ package com.jpmc.midascore.component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jpmc.midascore.foundation.Transaction;
+import com.jpmc.midascore.service.TransactionService;
+import com.jpmc.midascore.service.UserService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,14 @@ public class GenericKafkaListener {
     private static final Logger logger = LoggerFactory.getLogger(GenericKafkaListener.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final UserService userService;
+    private final TransactionService transactionService;
+
+    public GenericKafkaListener(UserService userService, TransactionService transactionService) {
+        this.userService = userService;
+        this.transactionService = transactionService;
+    }
 
     /**
      * 通用监听函数，可以监听多个 topic
@@ -40,10 +50,26 @@ public class GenericKafkaListener {
         }
     }
 
-    private void handleTransaction(Transaction tx) {
-        logger.info("💳 Parsed Transaction: senderId={}, recipientId={}, amount={}",
-                tx.getSenderId(), tx.getRecipientId(), tx.getAmount());
-        // TODO: 你可以在这里调用你的业务逻辑，例如保存数据库、触发事件等
+    private void handleTransaction(Transaction transaction) {
+        long senderId = transaction.getSenderId(), recipientId = transaction.getRecipientId();
+
+        logger.debug("sender[{}]: {}, {}; recipient[{}], {}, {}", senderId,
+                userService.getUserName(senderId), userService.getBalance(senderId),
+                recipientId, userService.getUserName(recipientId), userService.getBalance(recipientId));
+
+        float senderAmount = userService.getBalance(senderId);
+        if (senderAmount < transaction.getAmount()) {
+            logger.error("sender has no enough money");
+        }
+        else {
+            transactionService.insertOneRecord(transaction);
+            userService.updateBalance(senderId, senderAmount - transaction.getAmount());
+            userService.updateBalance(recipientId, userService.getBalance(recipientId) + transaction.getAmount());
+            logger.debug("sender[{}]: {}, {}; recipient[{}], {}, {}", senderId,
+                    userService.getUserName(senderId), userService.getBalance(senderId),
+                    recipientId, userService.getUserName(recipientId), userService.getBalance(recipientId));
+        }
+
     }
 
 }
